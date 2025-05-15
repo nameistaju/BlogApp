@@ -2,6 +2,7 @@ import React, { useReducer } from 'react';
 import axios from 'axios';
 import BlogContext from './blogContext';
 import blogReducer from './blogReducer';
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 import {
   GET_BLOGS,
   GET_BLOG,
@@ -36,7 +37,7 @@ const BlogState = ({ children }) => {
   const getBlogs = async (filters = {}) => {
     dispatch({ type: SET_LOADING });
 
-    let url = 'http://localhost:5000/api/blogs';
+    let url = `${API_BASE}/api/blogs`;
     
     const queryParams = [];
     if (filters.category) queryParams.push(`category=${filters.category}`);
@@ -66,7 +67,7 @@ const BlogState = ({ children }) => {
     dispatch({ type: SET_LOADING });
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/blogs/${id}`);
+      const res = await axios.get(`${API_BASE}/api/blogs/${id}`);
       
       dispatch({
         type: GET_BLOG,
@@ -85,7 +86,7 @@ const BlogState = ({ children }) => {
     dispatch({ type: SET_LOADING });
 
     try {
-      const res = await axios.get('http://localhost:5000/api/blogs/user/me');
+      const res = await axios.get(`${API_BASE}/api/blogs/user/me`);
       
       dispatch({
         type: GET_USER_BLOGS,
@@ -110,7 +111,7 @@ const BlogState = ({ children }) => {
     dispatch({ type: SET_LOADING });
 
     try {
-      const res = await axios.post('http://localhost:5000/api/blogs', blogData, config);
+     const res = await axios.post(`${API_BASE}/api/blogs`, blogData, config);
       
       dispatch({
         type: ADD_BLOG,
@@ -138,7 +139,7 @@ const BlogState = ({ children }) => {
     dispatch({ type: SET_LOADING });
 
     try {
-      const res = await axios.put(`http://localhost:5000/api/blogs/${id}`, blogData, config);
+      const res = await axios.put(`${API_BASE}/api/blogs/${id}`, blogData, config);
       
       dispatch({
         type: UPDATE_BLOG,
@@ -160,7 +161,7 @@ const BlogState = ({ children }) => {
     dispatch({ type: SET_LOADING });
 
     try {
-      await axios.delete(`http://localhost:5000/api/blogs/${id}`);
+      await axios.delete(`${API_BASE}/api/blogs/${id}`);
       
       dispatch({
         type: DELETE_BLOG,

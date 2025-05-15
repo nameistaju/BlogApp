@@ -3,6 +3,8 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import AuthContext from './authContext';
 import authReducer from './authReducer';
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 import {
   REGISTER_SUCCESS,
   REGISTER_FAIL,
@@ -40,7 +42,8 @@ const AuthState = ({ children }) => {
     if (localStorage.token) {
       setAuthToken(localStorage.token);
       try {
-        const res = await axios.get('http://localhost:5000/api/auth/user');
+        const res = await axios.get(`${API_BASE}/api/auth/user`);
+
         dispatch({ type: USER_LOADED, payload: res.data });
       } catch (err) {
         dispatch({
@@ -56,7 +59,7 @@ const AuthState = ({ children }) => {
     dispatch({ type: SET_LOADING });
     try {
       const res = await axios.post(
-        'http://localhost:5000/api/auth/signup',
+        `${API_BASE}/api/auth/signup`,
         formData,
         {
           headers: { 'Content-Type': 'application/json' },
@@ -78,7 +81,7 @@ const AuthState = ({ children }) => {
     dispatch({ type: SET_LOADING });
     try {
       const res = await axios.post(
-        'http://localhost:5000/api/auth/login',
+        `${API_BASE}/api/auth/login`,
         formData,
         {
           headers: { 'Content-Type': 'application/json' },
