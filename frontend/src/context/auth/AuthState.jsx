@@ -116,6 +116,7 @@ const AuthState = ({ children }) => {
       dispatch({ type: AUTH_ERROR });
     }
   }, []);
+console.log("API_BASE from env:", API_BASE);
 
   return (
     <AuthContext.Provider
