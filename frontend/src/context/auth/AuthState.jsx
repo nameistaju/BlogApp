@@ -3,6 +3,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import AuthContext from './authContext';
 import authReducer from './authReducer';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 import {
@@ -28,7 +29,7 @@ const setAuthToken = (token) => {
 
 const AuthState = ({ children }) => {
   const initialState = {
-    token: localStorage.getItem('token'),
+    token: null,
     isAuthenticated: null,
     loading: true,
     user: null,
@@ -37,20 +38,16 @@ const AuthState = ({ children }) => {
 
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Load user if token exists
+  // Load user from API
   const loadUser = async () => {
-    if (localStorage.token) {
-      setAuthToken(localStorage.token);
-      try {
-        const res = await axios.get(`${API_BASE}/api/auth/user`);
-
-        dispatch({ type: USER_LOADED, payload: res.data });
-      } catch (err) {
-        dispatch({
-          type: AUTH_ERROR,
-          payload: err.response?.data?.message || 'Failed to load user',
-        });
-      }
+    try {
+      const res = await axios.get(`${API_BASE}/api/auth/user`);
+      dispatch({ type: USER_LOADED, payload: res.data });
+    } catch (err) {
+      dispatch({
+        type: AUTH_ERROR,
+        payload: err.response?.data?.message || 'Failed to load user',
+      });
     }
   };
 
@@ -58,13 +55,9 @@ const AuthState = ({ children }) => {
   const register = async (formData) => {
     dispatch({ type: SET_LOADING });
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/auth/signup`,
-        formData,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const res = await axios.post(`${API_BASE}/api/auth/signup`, formData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       dispatch({ type: REGISTER_SUCCESS, payload: res.data });
       setAuthToken(res.data.token);
       loadUser();
@@ -80,13 +73,9 @@ const AuthState = ({ children }) => {
   const login = async (formData) => {
     dispatch({ type: SET_LOADING });
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/auth/login`,
-        formData,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const res = await axios.post(`${API_BASE}/api/auth/login`, formData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
       setAuthToken(res.data.token);
       loadUser();
@@ -98,7 +87,7 @@ const AuthState = ({ children }) => {
     }
   };
 
-  // Logout
+  // Logout user
   const logout = () => {
     setAuthToken(null);
     dispatch({ type: LOGOUT });
@@ -107,15 +96,17 @@ const AuthState = ({ children }) => {
   // Clear errors
   const clearErrors = () => dispatch({ type: CLEAR_ERRORS });
 
-  // Check token validity on mount
+  // On mount, load token and validate it
   useEffect(() => {
-    if (state.token) {
+    const token = localStorage.getItem('token');
+    if (token) {
       try {
-        const decoded = jwtDecode(state.token);
+        const decoded = jwtDecode(token);
         if (decoded.exp * 1000 < Date.now()) {
           logout();
         } else {
-          setAuthToken(state.token);
+          setAuthToken(token);
+          dispatch({ type: LOGIN_SUCCESS, payload: { token } }); // Optional: update state
           loadUser();
         }
       } catch (err) {
@@ -124,7 +115,6 @@ const AuthState = ({ children }) => {
     } else {
       dispatch({ type: AUTH_ERROR });
     }
-    // eslint-disable-next-line
   }, []);
 
   return (
