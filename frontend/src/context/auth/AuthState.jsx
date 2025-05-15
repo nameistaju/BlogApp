@@ -1,10 +1,7 @@
 import React, { useReducer, useEffect } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 import AuthContext from './authContext';
 import authReducer from './authReducer';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 import {
   REGISTER_SUCCESS,
@@ -18,12 +15,32 @@ import {
   SET_LOADING,
 } from './authTypes';
 
-// Helper function to set or remove token from Axios headers
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+if (!API_BASE) throw new Error("VITE_API_BASE_URL is undefined. Please check your .env file.");
+
+// ✅ Helper: Set or remove token from Axios
 const setAuthToken = (token) => {
   if (token) {
     axios.defaults.headers.common['x-auth-token'] = token;
   } else {
     delete axios.defaults.headers.common['x-auth-token'];
+  }
+};
+
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (err) {
+    console.error('JWT decoding failed:', err);
+    return null;
   }
 };
 
@@ -38,12 +55,13 @@ const AuthState = ({ children }) => {
 
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Load user from API
+  // ✅ Load user from backend
   const loadUser = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/auth/user`);
       dispatch({ type: USER_LOADED, payload: res.data });
     } catch (err) {
+      console.error("Load user failed:", err);
       dispatch({
         type: AUTH_ERROR,
         payload: err.response?.data?.message || 'Failed to load user',
@@ -51,7 +69,7 @@ const AuthState = ({ children }) => {
     }
   };
 
-  // Register user
+  // ✅ Register user
   const register = async (formData) => {
     dispatch({ type: SET_LOADING });
     try {
@@ -69,7 +87,7 @@ const AuthState = ({ children }) => {
     }
   };
 
-  // Login user
+  // ✅ Login user
   const login = async (formData) => {
     dispatch({ type: SET_LOADING });
     try {
@@ -87,36 +105,33 @@ const AuthState = ({ children }) => {
     }
   };
 
-  // Logout user
   const logout = () => {
     setAuthToken(null);
     dispatch({ type: LOGOUT });
   };
 
-  // Clear errors
   const clearErrors = () => dispatch({ type: CLEAR_ERRORS });
 
-  // On mount, load token and validate it
+  // ✅ On mount, validate token
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        if (decoded.exp * 1000 < Date.now()) {
-          logout();
-        } else {
-          setAuthToken(token);
-          dispatch({ type: LOGIN_SUCCESS, payload: { token } }); // Optional: update state
-          loadUser();
-        }
-      } catch (err) {
+      const decoded = decodeJWT(token);
+      if (decoded && decoded.exp * 1000 > Date.now()) {
+        setAuthToken(token);
+        dispatch({ type: LOGIN_SUCCESS, payload: { token } });
+        loadUser();
+      } else {
         logout();
       }
     } else {
-      dispatch({ type: AUTH_ERROR });
+      dispatch({ type: AUTH_ERROR, payload: 'No token found' });
     }
   }, []);
-console.log("API_BASE from env:", API_BASE);
+
+  // ✅ Debug logs
+  // console.log("AuthContext.Provider state:", state);
+  // console.log("API_BASE from env:", API_BASE);
 
   return (
     <AuthContext.Provider

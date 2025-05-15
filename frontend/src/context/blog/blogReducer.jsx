@@ -16,35 +16,40 @@ import {
 const blogReducer = (state, action) => {
   switch (action.type) {
     case GET_BLOGS:
+      // Load all blogs
       return {
         ...state,
         blogs: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
     case GET_BLOG:
+      // Load single blog
       return {
         ...state,
         currentBlog: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
     case GET_USER_BLOGS:
+      // Load blogs created by current user
       return {
         ...state,
         userBlogs: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
     case ADD_BLOG:
+      // Add new blog to lists
       return {
         ...state,
         blogs: [action.payload, ...state.blogs],
         userBlogs: [action.payload, ...state.userBlogs],
         loading: false,
-        error: null
+        error: null,
       };
     case UPDATE_BLOG:
+      // Update blog in lists and currentBlog
       return {
         ...state,
         blogs: state.blogs.map(blog =>
@@ -55,46 +60,53 @@ const blogReducer = (state, action) => {
         ),
         currentBlog: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
     case DELETE_BLOG:
+      // Remove blog from lists
       return {
         ...state,
         blogs: state.blogs.filter(blog => blog._id !== action.payload),
         userBlogs: state.userBlogs.filter(blog => blog._id !== action.payload),
         loading: false,
-        error: null
+        error: null,
       };
     case BLOG_ERROR:
+      // Set error
       return {
         ...state,
         error: action.payload,
-        loading: false
+        loading: false,
       };
     case CLEAR_CURRENT:
+      // Clear current blog selection
       return {
         ...state,
-        currentBlog: null
+        currentBlog: null,
       };
     case SET_LOADING:
+      // Set loading state
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case CLEAR_ERRORS:
+      // Clear errors
       return {
         ...state,
-        error: null
+        error: null,
       };
     case SET_FILTER:
+      // Set blog filters
       return {
         ...state,
-        filter: action.payload
+        filter: action.payload,
       };
     case CLEAR_FILTER:
+      // Clear blog filters
       return {
         ...state,
-        filter: { category: '', author: '' }
+        filter: { category: '', author: '' },
       };
     default:
       return state;

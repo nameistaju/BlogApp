@@ -1,128 +1,134 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BlogContext from '../context/blog/blogContext';
 import AlertContext from '../context/alert/alertContext';
-import AuthContext from '../context/auth/authContext';
-import Spinner from '../components/layout/Spinner';
-import BlogForm from "../components/blogs/BlogForm";
-
 
 const EditBlog = () => {
-  const blogContext = useContext(BlogContext);
-  const alertContext = useContext(AlertContext);
-  const authContext = useContext(AuthContext);
-  
-  const { getBlog, updateBlog, currentBlog, clearCurrent, loading } = blogContext;
-  const { setAlert } = alertContext;
-  const { user } = authContext;
-  
-  const navigate = useNavigate();
   const { id } = useParams();
-  
-  const [blog, setBlog] = useState({
+  const navigate = useNavigate();
+
+  const { getBlogById, updateBlog, currentBlog } = useContext(BlogContext);
+  const { setAlert } = useContext(AlertContext);
+
+  const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: 'Technology',
+    category: '',
     image: '',
-    author: ''
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [unauthorized, setUnauthorized] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState('');
 
   useEffect(() => {
-    if (getBlog && typeof getBlog === 'function') {
-      getBlog(id);
-    }
-    
-    return () => clearCurrent();
-    // eslint-disable-next-line
+    const fetch = async () => {
+      await getBlogById(id);
+    };
+    fetch();
   }, [id]);
 
   useEffect(() => {
     if (currentBlog) {
-      // Check if current user is author
-      if (user && currentBlog.userId && currentBlog.userId.toString() !== user._id) {
-        setUnauthorized(true);
-        setAlert('You are not authorized to edit this blog', 'error');
-        setTimeout(() => navigate('/blogs/' + id), 2000);
-        return;
-      }
-
-      setBlog({
+      setFormData({
         title: currentBlog.title || '',
         content: currentBlog.content || '',
-        category: currentBlog.category || 'Technology',
+        category: currentBlog.category || '',
         image: currentBlog.image || '',
-        author: currentBlog.author || (user ? user.name : '')
       });
+      setPreview(currentBlog.image || '');
+      setLoading(false);
     }
-  }, [currentBlog, user, id, navigate, setAlert]);
+  }, [currentBlog]);
 
-  const onSubmit = async e => {
-    e.preventDefault();
-    const { title, content } = blog;
-    
-    if (title === '' || content === '') {
-      setAlert('Please fill in all required fields', 'error');
-    } else {
-      setSubmitting(true);
-      try {
-        // Ensure author field is preserved
-        const blogData = {
-          ...blog,
-          author: blog.author || currentBlog.author || (user ? user.name : '')
-        };
-        
-        await updateBlog(id, blogData);
-        setAlert('Blog updated successfully', 'success');
-        navigate('/my-blogs');
-      } catch (error) {
-        setAlert('Failed to update blog', 'error');
-      } finally {
-        setSubmitting(false);
-      }
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'image') {
+      setPreview(value);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center w-full min-h-[60vh]">
-        <Spinner />
-      </div>
-    );
-  }
+  const onSubmit = async (e) => {
+    e.preventDefault();
 
-  if (unauthorized) {
-    return (
-      <div className="p-4 mx-auto mt-8 text-center bg-red-100 border border-red-400 rounded max-w-md">
-        <p className="text-red-700">You are not authorized to edit this blog.</p>
-        <p className="mt-2 text-gray-700">Redirecting to blog details...</p>
-      </div>
-    );
-  }
+    if (!formData.title || !formData.content || !formData.category) {
+      setAlert('All fields are required', 'error');
+      return;
+    }
+
+    try {
+      await updateBlog(id, formData);
+      setAlert('Blog updated successfully!', 'success');
+      navigate(`/blogs/${id}`);
+    } catch (err) {
+      setAlert('Failed to update blog', 'error');
+    }
+  };
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
 
   return (
-    <div className="container px-4 py-8 mx-auto max-w-4xl">
-      <h1 className="mb-6 text-3xl font-bold text-center text-gray-800">Edit Blog</h1>
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <BlogForm
-          blog={blog}
-          setBlog={setBlog}
-          onSubmit={onSubmit}
-          buttonText="Update Blog"
-          loading={submitting}
-          currentUser={user}
+    <div className="max-w-3xl mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Edit Blog</h1>
+      <form onSubmit={onSubmit} className="space-y-6">
+        <input
+          type="text"
+          name="title"
+          placeholder="Blog Title"
+          value={formData.title}
+          onChange={onChange}
+          className="w-full p-3 border rounded"
+          required
         />
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => navigate('/my-blogs')}
-            className="px-4 py-2 font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+
+        <input
+          type="text"
+          name="category"
+          placeholder="Category"
+          value={formData.category}
+          onChange={onChange}
+          className="w-full p-3 border rounded"
+          required
+        />
+
+        <textarea
+          name="content"
+          placeholder="Content (Markdown supported)"
+          rows="10"
+          value={formData.content}
+          onChange={onChange}
+          className="w-full p-3 border rounded"
+          required
+        ></textarea>
+
+        <input
+          type="text"
+          name="image"
+          placeholder="Image URL"
+          value={formData.image}
+          onChange={onChange}
+          className="w-full p-3 border rounded"
+        />
+
+        {preview && (
+          <img
+            src={preview}
+            alt="Preview"
+            className="w-full h-64 object-cover rounded border"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x400?text=Invalid+Image';
+            }}
+          />
+        )}
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        >
+          Update Blog
+        </button>
+      </form>
     </div>
   );
 };

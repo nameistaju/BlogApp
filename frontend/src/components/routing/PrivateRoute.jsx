@@ -5,7 +5,8 @@ import AuthContext from '../../context/auth/authContext';
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
-  if (loading) {
+  // Show spinner while loading auth state
+  if (loading || isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="w-16 h-16 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
@@ -13,7 +14,8 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  // Redirect only if explicitly not authenticated
+  if (isAuthenticated === false) {
     return <Navigate to="/login" />;
   }
 

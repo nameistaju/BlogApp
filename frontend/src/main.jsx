@@ -1,13 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
 import { BrowserRouter } from 'react-router-dom';
+import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+import App from './App';
+import AuthState from './context/auth/AuthState';
+import BlogState from './context/blog/BlogState';
+import AlertState from './context/alert/AlertState';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const Root = () => (
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <AuthState>
+        <BlogState>
+          <AlertState>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </AlertState>
+        </BlogState>
+      </AuthState>
+    </ErrorBoundary>
   </React.StrictMode>
 );
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);

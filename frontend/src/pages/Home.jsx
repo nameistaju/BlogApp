@@ -6,8 +6,8 @@ import BlogList from '../components/blogs/BlogList';
 import BlogFilter from '../components/blogs/BlogFilter';
 
 const Home = () => {
-  const { blogs, loading: blogsLoading, getBlogs } = useContext(BlogContext);
-  const { isAuthenticated, loading: authLoading } = useContext(AuthContext);
+  const { blogs = [], loading: blogsLoading, getBlogs, error: blogError } = useContext(BlogContext);
+  const { isAuthenticated, loading: authLoading, error: authError } = useContext(AuthContext);
 
   useEffect(() => {
     if (isAuthenticated && blogs.length === 0) {
@@ -19,6 +19,14 @@ const Home = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <p className="text-xl font-medium text-gray-700 animate-pulse">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="p-4 text-red-600 text-center">
+        Authentication error: {authError}
       </div>
     );
   }
@@ -44,6 +52,14 @@ const Home = () => {
             </Link>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (blogError) {
+    return (
+      <div className="p-4 text-red-600 text-center">
+        Blog loading error: {blogError}
       </div>
     );
   }
